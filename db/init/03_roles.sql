@@ -14,3 +14,4 @@ TO assistant_ro;
 ALTER ROLE assistant_ro SET default_transaction_read_only = on;
 ALTER ROLE assistant_ro SET statement_timeout = '5s';
 ALTER ROLE assistant_ro SET idle_in_transaction_session_timeout = '10s';
+
