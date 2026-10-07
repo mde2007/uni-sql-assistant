@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: university
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data         # данные базы сохраняются между запусками
+      - ./db/init:/docker-entrypoint-initdb.d   # SQL-скрипты выполнятся при первом старте
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d university"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://assistant_ro:ro_password@db:5432/university
+      FRONTEND_DIR: /app/frontend
+      LOG_DIR: /app/logs
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./frontend:/app/frontend
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
