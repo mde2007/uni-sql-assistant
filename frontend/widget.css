@@ -1,0 +1,62 @@
+/* Кнопка открытия в правом нижнем углу */
+.uc-open {
+  position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+  padding: 12px 18px; border: none; border-radius: 24px;
+  background: #1652b4; color: #fff; font: 600 14px Arial, sans-serif;
+  cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Окно чата */
+.uc-panel {
+  position: fixed; right: 20px; bottom: 76px; z-index: 9999;
+  width: 440px; height: 620px;
+  max-width: calc(100vw - 40px); max-height: calc(100vh - 100px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  font: 14px/1.4 Arial, sans-serif; color: #1a2233;
+}
+.uc-hidden { display: none; }
+
+/* Шапка окна */
+.uc-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: #1652b4; color: #fff; font-weight: 600;
+}
+.uc-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+
+/* Лента сообщений */
+.uc-messages {
+  flex: 1; overflow-y: auto; padding: 12px;
+  display: flex; flex-direction: column; gap: 10px; background: #f4f6fa;
+}
+.uc-msg { padding: 10px 12px; border-radius: 10px; max-width: 95%; }
+.uc-user { align-self: flex-end; background: #1652b4; color: #fff; }
+.uc-bot { align-self: flex-start; background: #fff; border: 1px solid #dde3ec; }
+.uc-loader { color: #6b7a90; font-style: italic; }
+.uc-error { color: #b3261e; }
+.uc-warning { margin-top: 6px; padding: 6px 8px; background: #fff4d6; border-radius: 6px; }
+.uc-muted { color: #6b7a90; margin-top: 6px; }
+
+/* Сворачиваемые блоки SQL и объяснения */
+.uc-details { margin-top: 8px; }
+.uc-details summary { cursor: pointer; color: #1652b4; }
+.uc-sql {
+  white-space: pre-wrap; padding: 8px; border-radius: 6px;
+  background: #0f1b2d; color: #d6e2ff; font: 12px/1.4 Consolas, monospace;
+}
+
+/* Таблица результатов */
+.uc-table-wrap { margin-top: 8px; max-height: 260px; overflow: auto; }
+.uc-table { border-collapse: collapse; font-size: 12px; }
+.uc-table th, .uc-table td {
+  border: 1px solid #dde3ec; padding: 4px 8px; text-align: left; white-space: nowrap;
+}
+.uc-table th { background: #eef2f8; position: sticky; top: 0; }
+.uc-pager { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+
+/* Поле ввода */
+.uc-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #dde3ec; }
+.uc-input { flex: 1; padding: 8px 10px; border: 1px solid #c5cedb; border-radius: 8px; font-size: 14px; }
+.uc-send { padding: 8px 14px; border: none; border-radius: 8px; background: #1652b4; color: #fff; cursor: pointer; }
+.uc-send:disabled { opacity: 0.5; }
