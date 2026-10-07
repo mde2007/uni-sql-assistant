@@ -2,6 +2,7 @@ import pytest
 from app.validator import validate_sql, ValidationError
 
 GOOD = [
+        "SELECT count(DISTINCT student_code) FROM v_grades",
     "SELECT name FROM programs",
     "SELECT p.name, count(*) FROM v_applications AS a "
     "JOIN programs AS p ON p.id = a.program_id GROUP BY p.name",
@@ -10,6 +11,10 @@ GOOD = [
 ]
 
 BAD = [
+    "SELECT string_agg(student_code, ',') FROM v_grades",
+    "SELECT max(student_code) FROM v_grades",
+    "SELECT s FROM (SELECT student_code AS s FROM v_grades) AS x",
+    "WITH t AS (SELECT student_code AS s FROM v_students) SELECT s FROM t",
     "DROP TABLE students",
     "DELETE FROM programs",
     "UPDATE programs SET name = 'x'",

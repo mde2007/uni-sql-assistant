@@ -66,16 +66,15 @@ def validate_sql(sql):
         if fname in FORBIDDEN_FUNCTIONS:
             raise ValidationError(f"функция {fname} запрещена")
 
-    # 7. Персональные данные: нельзя SELECT * и коды студентов без агрегата
-    selects = [tree] if isinstance(tree, exp.Select) else list(tree.find_all(exp.Select))
-    for sel in selects:
+    # 7. Персональные данные: проверяем ВСЕ SELECT, включая подзапросы и WITH
+    for sel in tree.find_all(exp.Select):
         for column in sel.expressions:
             has_aggregate = column.find(exp.AggFunc) is not None
             if column.find(exp.Star) is not None and not has_aggregate:
                 raise ValidationError("SELECT * запрещён, нужно перечислить столбцы")
             for col in column.find_all(exp.Column):
-                if col.name.lower() == "student_code" and not has_aggregate:
-                    raise ValidationError("нельзя выводить коды студентов, только агрегаты")
+                if col.name.lower() == "student_code" and col.find_ancestor(exp.Count) is None:
+                    raise ValidationError("код студента можно использовать только внутри count()")
 
     # 8. LIMIT: ставим, если нет, или уменьшаем, если слишком большой
     if isinstance(tree, exp.Union):
