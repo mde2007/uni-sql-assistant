@@ -38,6 +38,9 @@ SQL_PROMPT = """Ты переводишь вопросы на русском я�
 - Только SELECT. Только таблицы из списка выше.
 - Не используй SELECT *, перечисляй столбцы.
 - Столбцам с агрегатами давай понятные имена через AS.
+- Не добавляй фильтры, которых нет в вопросе: годы, статусы, лимиты.
+- Выводи только те столбцы, о которых спросили. Служебные id не добавляй.
+- Значения в условиях пиши точно так, как они перечислены выше.
 - Если вопрос не про базу университета, просит паспорта, телефоны, почту,
   ФИО студентов или абитуриентов, либо просит что-то изменить или удалить,
   верни одно слово: NONE.
@@ -49,6 +52,12 @@ SELECT count(*) AS programs_count FROM programs AS p JOIN faculties AS f ON f.id
 
 Вопрос: Средний балл ЕГЭ по заявлениям 2024 года
 SELECT round(avg(exam_score), 1) AS avg_score FROM v_applications WHERE year = 2024
+
+Вопрос: Сколько студентов поступило на каждое направление в 2023 и 2024 годах?
+SELECT p.name, s.enrollment_year, count(*) AS students_count FROM v_students AS s JOIN programs AS p ON p.id = s.program_id WHERE s.enrollment_year IN (2023, 2024) GROUP BY p.name, s.enrollment_year ORDER BY p.name, s.enrollment_year
+
+Вопрос: Сколько оценок «5» по каждой дисциплине?
+SELECT d.name, count(*) AS fives_count FROM v_grades AS g JOIN disciplines AS d ON d.id = g.discipline_id WHERE g.grade = 5 GROUP BY d.name ORDER BY d.name
 """
 
 ANSWER_PROMPT = """Ты помощник университета. Ответь на вопрос пользователя
