@@ -15,7 +15,7 @@ PORT = 5432
 def main():
     password = os.getenv("POSTGRES_PASSWORD") or getpass.getpass("Пароль пользователя postgres: ")
 
-    # 1. Роль admin и база university. CREATE DATABASE нельзя внутри транзакции
+    # 1. Роль admin и база university
     with psycopg.connect(host=HOST, port=PORT, user="postgres", password=password,
                         dbname="postgres", autocommit=True) as conn:
         if conn.execute("SELECT 1 FROM pg_roles WHERE rolname = 'admin'").fetchone() is None:

@@ -15,7 +15,7 @@
     sessionStorage.setItem("uc_session", sessionId);
   }
 
-  // ---------- Разметка ----------
+  // Разметка 
   const openButton = document.createElement("button");
   openButton.className = "uc-open";
   openButton.textContent = "Ассистент";
@@ -43,7 +43,7 @@
   openButton.onclick = () => panel.classList.toggle("uc-hidden");
   panel.querySelector(".uc-close").onclick = () => panel.classList.add("uc-hidden");
 
-  // ---------- Помощники ----------
+  // Помощники 
   function addElement(parent, tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -56,7 +56,7 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
-  // ---------- Таблица с пагинацией ----------
+  // Таблица с пагинацией 
   function renderTable(container, data) {
     container.innerHTML = "";  // очистка контейнера, данных тут нет
     if (!data.rows || data.rows.length === 0) {
@@ -103,7 +103,7 @@
     }
   }
 
-  // ---------- Блоки SQL и объяснения ----------
+  // Блоки SQL и объяснения 
   function addSqlBlock(parent, sql) {
     const details = addElement(parent, "details", "uc-details");
     addElement(details, "summary", null, "SQL-запрос");
@@ -123,7 +123,7 @@
     if (ex.limit) addElement(list, "li", null, "Ограничение строк: " + ex.limit);
   }
 
-  // ---------- Ответ ассистента ----------
+  // Ответ ассистента 
   function renderAnswer(data) {
     const message = addElement(messages, "div", "uc-msg uc-bot");
 
@@ -140,7 +140,7 @@
     renderTable(addElement(message, "div"), data);
   }
 
-  // ---------- Заглушка для работы без backend ----------
+  // Заглушка для работы без backend 
   function mockResponse(question) {
     return {
       query_id: "mock",
@@ -153,7 +153,7 @@
     };
   }
 
-  // ---------- Отправка вопроса ----------
+  //  Отправка вопроса 
   async function send() {
     const question = input.value.trim();
     if (!question) return;
