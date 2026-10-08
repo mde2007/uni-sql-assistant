@@ -1,4 +1,4 @@
-# Чат-ассистент для БД университета
+# Чат-ассистент для базы данных университета
 
 Ассистент отвечает на вопросы о данных университета обычным языком, без знания SQL.
 Сотрудник приёмной комиссии, ректората или преподаватель пишет вопрос в чат, а ассистент сам составляет запрос к базе и отвечает цифрами.
@@ -15,49 +15,89 @@ PostgreSQL выполняет запрос → ответ текстом вме�
 
 ## Стек
 
-- **Backend:** Python 3.13, FastAPI, uvicorn
+- **Сервер:** Python 3.13, FastAPI, uvicorn, asyncpg (пул подключений)
 - **База:** PostgreSQL 16
 - **Модель:** GigaChat-2-Pro (API Сбера)
-- **Проверка и Разбор SQL:** sqlglot
-- **Тестовые данные**: Faker (генерация с фиксированным seed)
-- **Фронтенд:** HTML + JS виджет
+- **Проверка и разбор SQL:** sqlglot
+- **Тестовые данные:** Faker (генерация с фиксированным seed)
+- **Фронтенд:** встраиваемый виджет на HTML + JS
+- **Развёртывание:** Docker Compose
 
 ## Безопасность
 
-- На вопросы о личных данных модель отказывает, то есть SQL не создаётся.
+- На вопросы о личных данных модель отказывает, SQL не создаётся.
 - Валидатор (`validator.py`) пропускает только один `SELECT` и только к разрешённым таблицам.
 - Данные студентов и абитуриентов обезличены: модель видит представления `v_*` без ФИО,
   паспортов, телефонов и дат рождения (вместо даты рождения отдаётся только возраст).
 - Сервер подключается к базе под ролью `assistant_ro`: только чтение представлений, тайм-аут 5 секунд.
-- Ответ модели строится только по данным из бд, текст вопроса не исполняется как инструкция.
+- Ответ модели строится только по данным из базы, текст вопроса не исполняется как инструкция.
 - Ключ GigaChat хранится в `.env`, который не попадает в Git.
+
+## Запуск
+
+Запустить можно двумя способами: локально (Python + PostgreSQL) или через Docker. Выберите один.
+Оба одновременно не запускайте: они используют один порт 5432.
+
+Перед запуском получите ключ GigaChat (раздел «Ключ GigaChat» ниже).
+
+### Вариант 1: без Docker
+
+Нужны Python 3.13 и PostgreSQL 16.
+
+    git clone https://github.com/mde2007/uni-sql-assistant.git
+    cd uni-sql-assistant
+    python -m venv backend\.venv
+    backend\.venv\Scripts\activate
+    pip install -r backend\requirements.txt
+
+    python db\setup_db.py          # создаёт и заполняет базу, спросит пароль postgres
+    copy .env.example .env         # вписать GIGACHAT_AUTH_KEY
+
+    cd backend
+    uvicorn app.main:app --reload
+
+Откройте http://localhost:8000/static/index.html
+
+Если база уже создавалась раньше, пересоздайте её: `python db\setup_db.py --reset`
+
+### Вариант 2: через Docker
+
+Нужны Docker Desktop (с включённой виртуализацией и WSL 2) и Python 3.13 для заполнения базы.
+
+1. Создайте `.env` и впишите ключ GigaChat:
+
+       copy .env.example .env
+
+2. Поднимите базу и сервер:
+
+       docker compose up -d --build
+
+3. Заполните базу тестовыми данными (один раз):
+
+       pip install "psycopg[binary]" faker
+       python db\seed\seed.py
+
+4. Откройте http://localhost:8000/static/index.html
+
+Если что-то не так:
+
+- Порт 5432 занят: запущен обычный PostgreSQL. Остановите его: `Stop-Service postgresql*`.
+- Пересоздать базу с нуля: `docker compose down -v`, затем снова шаги 2 и 3.
+- Остановить всё: `docker compose down`.
 
 ## Ключ GigaChat
 
-Ассистенту нужен ключ авторизации GigaChat API.
+Ассистенту нужен ключ авторизации GigaChat API. Для физлиц он бесплатный (тариф Freemium).
 
 1. Зайдите на [developers.sber.ru/studio](https://developers.sber.ru/studio) и войдите через Сбер ID.
 2. Создайте проект **GigaChat API** в личном пространстве (для физических лиц).
 3. Откройте **Настройка API** и нажмите **Получить ключ**.
-4. Скопируйте **Authorization key** и сохраните его (повторно не показывается - можно только выпустить новый).
-5. Вставьте ключ `.env` в корне проекта.
+4. Скопируйте **Authorization key** и сохраните сразу: повторно он не показывается.
+5. Вставьте ключ в `.env` в корне проекта:
 
-## Запуск
+       GIGACHAT_AUTH_KEY=ваш_ключ
+       GIGACHAT_SCOPE=GIGACHAT_API_PERS
+       GIGACHAT_MODEL=GigaChat-2-Pro
 
-Нужны Python 3.13 и PostgreSQL 16.
-
-```powershell
-git clone https://github.com/mde2007/uni-sql-assistant.git
-cd uni-sql-assistant
-python -m venv backend\.venv
-backend\.venv\Scripts\activate
-pip install -r backend\requirements.txt
-
-python db\setup_db.py        # создаёт и заполняет базу, спросит пароль postgres
-copy .env.example .env       # вписать GIGACHAT_AUTH_KEY
-
-cd backend
-uvicorn app.main:app --reload
-```
-
-Открыть http://localhost:8000/static/index.html
+Без ключа сервер запустится, но вместо ответов модели будет заглушка.
+Не коммитьте `.env`: ключ даёт доступ к вашему аккаунту.
