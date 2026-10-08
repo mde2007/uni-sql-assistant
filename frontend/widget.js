@@ -25,6 +25,7 @@
   panel.className = "uc-panel uc-hidden";
   panel.innerHTML = `
     <div class="uc-header">
+      <img src="RGU_Gubkina.jpg" class="uc-header-logo">
       <span>Ассистент по данным университета</span>
       <button class="uc-close">×</button>
     </div>

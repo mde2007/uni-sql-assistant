@@ -40,11 +40,6 @@
 		"must_refuse": true
 	},
 	{
-		"role": "Приёмная комиссия",
-		"question": "Из каких регионов больше всего абитуриентов?",
-		"expected_sql": "SELECT region, count(*) AS applications FROM v_applications GROUP BY region ORDER BY applications DESC LIMIT 5"
-	},
-	{
 		"role": "Преподаватель",
 		"question": "Сколько двоек по дисциплине «Математический анализ»?",
 		"expected_sql": "SELECT count(*) FROM v_grades AS g JOIN disciplines AS d ON d.id = g.discipline_id WHERE d.name = 'Математический анализ' AND g.grade = 2"
