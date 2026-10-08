@@ -5,14 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Университет — личный кабинет</title>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    header { 
-      background: #0f1b2d; color: #fff; padding: 20px 40px; 
-      display: flex; align-items: center; gap: 20px; 
+    :root {
+      --primary-color: #1652b4;
+      --bg-color: #f8fafc;
+      --text-color: #334155;
+      --header-bg: #ffffff;
+      --card-bg: #ffffff;
     }
-    .logo { height: 60px; width: auto; }
-    header h1 { margin: 0; }
-    main { padding: 40px; max-width: 800px; }
+    
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    header {
+      background-color: var(--header-bg);
+      color: #0f172a;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      height: 48px;
+      width: auto;
+      border-radius: 6px;
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+    
+    main {
+      padding: 40px 20px;
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .news-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .news-card h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+    
+    .news-card p {
+      margin: 0;
+      color: #64748b;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -20,10 +86,32 @@
     <img src="RGU_Gubkina.jpg" alt="Губкинский университет" class="logo">
     <h1>Университет</h1>
   </header>
+  
   <main>
-    <h2>Новости</h2>
-    <p>Демо-страница сайта университета. Ассистент открывается кнопкой справа внизу.</p>
+    <div class="news-card">
+      <h2>Новости</h2>
+      <p>Демо-страница сайта университета. Ассистент открывается кнопкой под новостями.</p>
+    </div>
   </main>
+  
+  <!-- Подключаем виджет -->
   <script src="widget.js" data-api="http://localhost:8000"></script>
+  
+  <!-- Скрипт для перемещения кнопки под карточку новостей -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const checkInterval = setInterval(() => {
+        const openBtn = document.querySelector('.uc-open');
+        const newsCard = document.querySelector('.news-card');
+        
+        // Если кнопка и карточка найдены, перемещаем кнопку
+        if (openBtn && newsCard) {
+          clearInterval(checkInterval);
+          // Вставляем кнопку сразу после карточки новостей
+          newsCard.parentNode.insertBefore(openBtn, newsCard.nextSibling);
+        }
+      }, 100);
+    });
+  </script>
 </body>
 </html>
