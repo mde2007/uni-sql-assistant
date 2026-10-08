@@ -46,7 +46,7 @@ def validate_sql(sql):
 
     # 4. Внутри не должно быть изменяющих команд (например, в WITH)
     if tree.find(exp.Insert, exp.Update, exp.Delete, exp.Drop, exp.Create,
-                 exp.Command, exp.Into) is not None:
+                exp.Command, exp.Into) is not None:
         raise ValidationError("запрещённая команда внутри запроса")
 
     # 5. Только таблицы из белого списка
