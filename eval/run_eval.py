@@ -9,7 +9,6 @@ ADMIN_URL = "postgresql://admin:admin_password@localhost:5432/university"
 
 
 def normalize_value(value):
-    # 4.50 и 4.5 должны считаться одинаковыми
     try:
         return str(round(float(value), 2))
     except (TypeError, ValueError):
