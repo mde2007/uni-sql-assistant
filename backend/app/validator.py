@@ -8,7 +8,7 @@ except Exception:  # на случай, если у Студента 1 конс�
 
 ALLOWED_TABLES = {
     "v_applications", "v_students", "v_grades", "v_teachers",
-    "faculties", "programs", "disciplines",
+    "faculties", "departments", "programs", "disciplines",
 }
 
 FORBIDDEN_FUNCTIONS = {
