@@ -4,10 +4,16 @@ CREATE TABLE faculties (
     dean_name TEXT NOT NULL
 );
 
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    faculty_id INT NOT NULL REFERENCES faculties (id)
+);
+
 CREATE TABLE programs (
     id SERIAL PRIMARY KEY,
-    code TEXT NOT NULL, 
-    name TEXT NOT NULL, 
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
     faculty_id INT NOT NULL REFERENCES faculties (id),
     budget_places INT NOT NULL
 );
@@ -16,7 +22,8 @@ CREATE TABLE teachers (
     id SERIAL PRIMARY KEY,
     full_name TEXT NOT NULL,
     position TEXT NOT NULL,
-    faculty_id INT NOT NULL REFERENCES faculties (id),
+    department_id INT NOT NULL REFERENCES departments (id),
+    birth_date DATE NOT NULL,
     email TEXT,
     phone TEXT
 );
@@ -79,3 +86,5 @@ CREATE INDEX ON students (program_id, enrollment_year);
 CREATE INDEX ON grades (discipline_id);
 
 CREATE INDEX ON grades (student_id);
+
+CREATE INDEX ON teachers (department_id);

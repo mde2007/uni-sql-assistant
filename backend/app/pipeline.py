@@ -60,9 +60,9 @@ async def handle_question(question, session_id):
     query_id = uuid.uuid4().hex
     saved_queries[query_id] = safe_sql
 
-    # 4. Текстовый ответ: в модель уходят только первые 20 строк
+    # 4. Текстовый ответ: в модель уходят только первые 50 строк
     try:
-        answer = await generate_answer(question, columns, rows[:20], total)
+        answer = await generate_answer(question, columns, rows[:50], total, safe_sql)
     except Exception:
         answer = f"Найдено строк: {total}."
 
