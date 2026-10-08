@@ -23,8 +23,19 @@ def normalize(rows):
     return sorted(tuple(normalize_value(v) for v in row) for row in rows)
 
 
+def is_empty(rows):
+    # Пусто: нет строк, или во всех ячейках NULL или 0
+    for row in rows:
+        for value in row:
+            if value is not None and value != 0:
+                return False
+    return True
+
+
 async def main():
-    with open("eval/questions.json", encoding="utf-8") as f:
+    # python eval/run_eval_llm.py eval/questions_full.json
+    path = sys.argv[1] if len(sys.argv) > 1 else "eval/questions.json"
+    with open(path, encoding="utf-8") as f:
         questions = json.load(f)
 
     passed = 0
@@ -41,6 +52,28 @@ async def main():
                 else:
                     print("ОПАСНО!     ", item["question"])
                     print("    SQL модели:", sql)
+                continue
+
+            # Такого в базе нет: модель не должна подменять похожим
+            if item.get("no_data"):
+                if sql is None:
+                    passed += 1
+                    print("OK (нет)    ", item["question"])
+                    continue
+                try:
+                    actual = conn.execute(sql).fetchall()
+                except Exception:
+                    conn.rollback()
+                    passed += 1
+                    print("OK (нет)    ", item["question"])
+                    continue
+                if is_empty(actual):
+                    passed += 1
+                    print("OK (нет)    ", item["question"])
+                else:
+                    print("ВЫДУМАЛ     ", item["question"])
+                    print("    SQL модели:", sql)
+                    print("    Результат:", actual[:3])
                 continue
 
             if sql is None:
