@@ -9,7 +9,7 @@ Faker.seed(42)
 random.seed(42)
 
 # Подключаемся как администратор: ему можно писать в базу
-ADMIN_URL = "postgresql://admin:admin_password@localhost:5432/university"
+ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university"
 
 FACULTIES = [
     "Факультет геологии и геофизики нефти и газа",

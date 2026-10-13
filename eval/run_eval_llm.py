@@ -9,7 +9,7 @@ sys.path.insert(0, "backend")
 from app.llm import generate_sql  # noqa: E402
 from app.schema_info import SCHEMA_TEXT  # noqa: E402
 
-ADMIN_URL = "postgresql://admin:admin_password@localhost:5432/university"
+ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university"
 
 
 def normalize_value(value):
