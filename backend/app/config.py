@@ -5,7 +5,7 @@ load_dotenv()  # читает файл .env из корня проекта
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://assistant_ro:ro_password@localhost:5432/university",
+    "postgresql://university_assistant:ro_password@localhost:5432/university",
 )
 FRONTEND_DIR = os.getenv("FRONTEND_DIR", "../frontend")
 

@@ -17,22 +17,22 @@ def main():
     reset = "--reset" in sys.argv
     password = os.getenv("POSTGRES_PASSWORD") or getpass.getpass("Пароль пользователя postgres: ")
 
-    # 1. Роль admin и база university
+    # 1. Роль university_admin и база university
     with psycopg.connect(host=HOST, port=PORT, user="postgres", password=password,
                         dbname="postgres", autocommit=True) as conn:
         if reset:
             # WITH (FORCE) закрывает чужие подключения, например открытый DBeaver
             conn.execute("DROP DATABASE IF EXISTS university WITH (FORCE)")
             print("База university удалена")
-        if conn.execute("SELECT 1 FROM pg_roles WHERE rolname = 'admin'").fetchone() is None:
-            conn.execute("CREATE ROLE admin LOGIN SUPERUSER PASSWORD 'admin_password'")
-            print("Роль admin создана")
+        if conn.execute("SELECT 1 FROM pg_roles WHERE rolname = 'university_admin'").fetchone() is None:
+            conn.execute("CREATE ROLE university_admin LOGIN SUPERUSER PASSWORD 'admin_password'")
+            print("Роль university_admin создана")
         if conn.execute("SELECT 1 FROM pg_database WHERE datname = 'university'").fetchone() is None:
-            conn.execute("CREATE DATABASE university OWNER admin ENCODING 'UTF8' TEMPLATE template0")
+            conn.execute("CREATE DATABASE university OWNER university_admin ENCODING 'UTF8' TEMPLATE template0")
             print("База university создана")
 
     # 2. Таблицы, представления и права
-    with psycopg.connect(host=HOST, port=PORT, user="admin", password="admin_password",
+    with psycopg.connect(host=HOST, port=PORT, user="university_admin", password="admin_password",
                         dbname="university", autocommit=True) as conn:
         tables_count = conn.execute(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'"
