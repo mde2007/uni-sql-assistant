@@ -9,7 +9,8 @@ sys.path.insert(0, "backend")
 from app.llm import generate_sql  # noqa: E402
 from app.schema_info import SCHEMA_TEXT  # noqa: E402
 
-ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university"
+# search_path=api: эталонные запросы видят те же представления, что и ассистент
+ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university?options=-csearch_path%3Dapi"
 
 
 def normalize_value(value):

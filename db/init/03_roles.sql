@@ -8,12 +8,40 @@ END
 $$;
 
 GRANT CONNECT ON DATABASE university TO university_assistant;
-GRANT USAGE ON SCHEMA public TO university_assistant;
 
--- Только представления и справочники.
-GRANT SELECT ON v_applications, v_students, v_grades, v_teachers,
-                faculties, departments, programs, disciplines
-TO university_assistant;
+-- Только схема api с представлениями. В public (там таблицы с личными данными)
+-- ассистент даже не может заглянуть.
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+-- права из старой версии скрипта (справочники лежали в public)
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM university_assistant;
+REVOKE ALL ON SCHEMA public FROM university_assistant;
+GRANT USAGE ON SCHEMA api TO university_assistant;
+GRANT SELECT ON ALL TABLES IN SCHEMA api TO university_assistant;
+ALTER ROLE university_assistant SET search_path = api;
+
+-- Функции, которые выполняют SQL из строки (в обход валидатора) или подвешивают базу.
+-- Права на них есть у всех (PUBLIC), поэтому отзываем у PUBLIC.
+-- Администратор — суперпользователь, его это не касается.
+DO $$
+DECLARE
+    func regprocedure;
+BEGIN
+    FOR func IN
+        SELECT p.oid::regprocedure
+        FROM pg_proc AS p
+        JOIN pg_namespace AS n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'pg_catalog'
+          AND (p.proname LIKE 'query\_to\_xml%'
+               OR p.proname LIKE 'table\_to\_xml%'
+               OR p.proname LIKE 'cursor\_to\_xml%'
+               OR p.proname LIKE 'schema\_to\_xml%'
+               OR p.proname LIKE 'database\_to\_xml%'
+               OR p.proname LIKE 'pg\_sleep%')
+    LOOP
+        EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC', func);
+    END LOOP;
+END
+$$;
 
 -- если валидатор что-то пропустит, то бд сама не даст писать и зависать
 ALTER ROLE university_assistant SET default_transaction_read_only = on;

@@ -19,18 +19,11 @@ async def close_pool():
     await pool.close()
 
 
-async def count_rows(sql):
-    count_sql = f"SELECT count(*) FROM ({sql}) AS q"
+async def fetch_all(sql):
+    # Валидатор уже поставил LIMIT не больше MAX_ROWS, поэтому забираем всё сразу
     async with pool.acquire() as conn:
         async with conn.transaction(readonly=True):
-            return await conn.fetchval(count_sql)
-
-
-async def fetch_page(sql, limit, offset):
-    page_sql = f"SELECT * FROM ({sql}) AS q LIMIT {int(limit)} OFFSET {int(offset)}"
-    async with pool.acquire() as conn:
-        async with conn.transaction(readonly=True):
-            stmt = await conn.prepare(page_sql)
+            stmt = await conn.prepare(sql)
             columns = [attr.name for attr in stmt.get_attributes()]
             records = await stmt.fetch()
     rows = [list(record.values()) for record in records]

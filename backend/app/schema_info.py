@@ -11,16 +11,18 @@ disciplines(id, name, teacher_id -> v_teachers.id, semester) — дисципл�
 v_applications(application_id, program_id -> programs.id, year, exam_score, status,
     submitted_at, gender, region) — заявления абитуриентов. Год заявления — столбец year.
     exam_score — сумма баллов ЕГЭ.
-v_students(student_code, program_id -> programs.id, enrollment_year, group_name, status, gender, age)
-    — студенты. Год поступления — столбец enrollment_year (столбца year здесь нет).
-    student_code — обезличенный код. age — возраст, полных лет.
-v_grades(student_code -> v_students.student_code, discipline_id -> disciplines.id, grade, exam_date)
-    — оценки от 2 до 5.
+v_students(program_id -> programs.id, enrollment_year, group_name, status, gender, age)
+    — студенты, одна строка — один студент. Год поступления — столбец enrollment_year
+    (столбца year здесь нет). age — возраст, полных лет.
+v_grades(program_id -> programs.id, enrollment_year, discipline_id -> disciplines.id, grade, exam_date)
+    — оценки от 2 до 5, одна строка — одна оценка. program_id и enrollment_year —
+    направление и год поступления студента, получившего оценку. Самого студента
+    в v_grades нет: число студентов по оценкам посчитать нельзя, только число оценок.
 
 Как соединять таблицы:
 - Студенты и факультет: v_students -> programs (program_id) -> faculties (faculty_id).
 - Заявления и факультет: v_applications -> programs -> faculties.
-- Оценки и факультет: v_grades -> v_students (student_code) -> programs -> faculties.
+- Оценки и факультет: v_grades -> programs (program_id) -> faculties.
 - Преподаватели и факультет: v_teachers.faculty_id напрямую.
 - Преподаватели и кафедра: v_teachers.department_id -> departments.
 - Кто ведёт дисциплину: disciplines.teacher_id -> v_teachers.
@@ -166,5 +168,5 @@ v_grades(student_code -> v_students.student_code, discipline_id -> disciplines.i
 - «Больше всего», «самый» — ORDER BY ... DESC LIMIT 1; «топ-N» — LIMIT N.
 
 Правила: только SELECT; всегда перечислять столбцы, без SELECT *;
-не выводить student_code, только агрегаты по студентам (COUNT, AVG и т.д.).
+по студентам и оценкам выводить только агрегаты (COUNT, AVG и т.д.).
 """

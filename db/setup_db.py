@@ -38,8 +38,9 @@ def main():
             "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'"
         ).fetchone()[0]
 
+        # 02 и 03 можно запускать повторно: они обновят представления и права
         for path in sorted((BASE / "init").glob("*.sql")):
-            if path.name.startswith(("01", "02")) and tables_count > 0:
+            if path.name.startswith("01") and tables_count > 0:
                 print("Пропускаю", path.name, "(таблицы уже есть)")
                 continue
             conn.execute(path.read_text(encoding="utf-8"))

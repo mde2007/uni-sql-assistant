@@ -287,7 +287,7 @@
 	{
 		"role": "Преподаватель",
 		"question": "Средний балл студентов по факультетам",
-		"expected_sql": "SELECT f.name, round(avg(g.grade), 2) FROM v_grades AS g JOIN v_students AS s ON s.student_code = g.student_code JOIN programs AS p ON p.id = s.program_id JOIN faculties AS f ON f.id = p.faculty_id GROUP BY f.name ORDER BY f.name"
+		"expected_sql": "SELECT f.name, round(avg(g.grade), 2) FROM v_grades AS g JOIN programs AS p ON p.id = g.program_id JOIN faculties AS f ON f.id = p.faculty_id GROUP BY f.name ORDER BY f.name"
 	},
 	{
 		"role": "Преподаватель",

@@ -1,18 +1,22 @@
 import time
 import uuid
+from collections import OrderedDict
 
 import asyncpg
 
 from app import db
-from app.config import PAGE_SIZE, MAX_ROWS
+from app.config import PAGE_SIZE, MAX_ROWS, SAVED_RESULTS
 from app.llm import generate_sql, generate_answer
 from app.validator import validate_sql, ValidationError
 from app.explain import explain_sql
 from app.schema_info import SCHEMA_TEXT
 from app.logger import log_event
 
-# Проверенные запросы для пагинации: query_id -> SQL
-saved_queries = {}
+# Результаты для пагинации: query_id -> {columns, rows}.
+# Запрос выполняется один раз, страницы режутся из сохранённых строк:
+# порядок строк не меняется между страницами, база не нагружается повторно.
+# Храним только последние SAVED_RESULTS, старые вытесняются.
+saved_results = OrderedDict()
 
 
 def error_response(message, sql=None):
@@ -42,8 +46,7 @@ async def handle_question(question, session_id):
     # 3. Выполнение в базе
     start = time.perf_counter()
     try:
-        total = await db.count_rows(safe_sql)
-        columns, rows = await db.fetch_page(safe_sql, PAGE_SIZE, 0)
+        columns, all_rows = await db.fetch_all(safe_sql)
     except asyncpg.exceptions.QueryCanceledError:
         log_event("db_timeout", session_id=session_id, sql=safe_sql)
         return error_response(
@@ -55,10 +58,14 @@ async def handle_question(question, session_id):
         return error_response("Ошибка при выполнении запроса. Ответ не сформирован.", safe_sql)
 
     duration_ms = round((time.perf_counter() - start) * 1000)
+    total = len(all_rows)
+    rows = all_rows[:PAGE_SIZE]
     log_event("query_done", session_id=session_id, sql=safe_sql, rows=total, ms=duration_ms)
 
     query_id = uuid.uuid4().hex
-    saved_queries[query_id] = safe_sql
+    saved_results[query_id] = {"columns": columns, "rows": all_rows}
+    if len(saved_results) > SAVED_RESULTS:
+        saved_results.popitem(last=False)
 
     # 4. Текстовый ответ: в модель уходят только первые 50 строк
     try:
@@ -94,21 +101,20 @@ async def handle_question(question, session_id):
 
 
 async def get_page(query_id, page):
-    sql = saved_queries.get(query_id)
-    if sql is None:
+    saved = saved_results.get(query_id)
+    if saved is None:
         return error_response("Результат устарел, задайте вопрос заново.")
 
     page = max(page, 1)
     offset = (page - 1) * PAGE_SIZE
-    columns, rows = await db.fetch_page(sql, PAGE_SIZE, offset)
-    total = await db.count_rows(sql)
+    rows = saved["rows"][offset:offset + PAGE_SIZE]
     log_event("page", query_id=query_id, page=page)
 
     return {
         "query_id": query_id,
-        "columns": columns,
+        "columns": saved["columns"],
         "rows": rows,
-        "total_rows": total,
+        "total_rows": len(saved["rows"]),
         "page": page,
         "page_size": PAGE_SIZE,
         "error": None,
