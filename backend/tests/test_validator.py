@@ -2,12 +2,20 @@ import pytest
 from app.validator import validate_sql, ValidationError
 
 GOOD = [
-        "SELECT count(DISTINCT student_code) FROM v_grades",
+    "SELECT count(DISTINCT student_code) FROM v_grades",
     "SELECT name FROM programs",
     "SELECT p.name, count(*) FROM v_applications AS a "
     "JOIN programs AS p ON p.id = a.program_id GROUP BY p.name",
     "SELECT avg(grade) FROM v_grades",
     "WITH t AS (SELECT program_id FROM v_students) SELECT count(*) FROM t",
+    # обычные функции из белого списка
+    "SELECT EXTRACT(YEAR FROM submitted_at) AS y, count(*) FROM v_applications GROUP BY y",
+    "SELECT string_agg(name, ', ') FROM programs",
+    "SELECT CASE WHEN grade >= 4 THEN 'хорошо' ELSE 'плохо' END AS g, count(*) FROM v_grades GROUP BY 1",
+    "SELECT coalesce(round(avg(exam_score), 1), 0) FROM v_applications WHERE year = 2026 OR year = 2025",
+    # ORDER BY по псевдониму, совпадающему с именем таблицы
+    "SELECT f.name, count(*) AS programs FROM programs AS p "
+    "JOIN faculties AS f ON f.id = p.faculty_id GROUP BY f.name ORDER BY programs DESC",
 ]
 
 BAD = [
@@ -40,6 +48,20 @@ BAD = [
     "это не SQL вообще",
     "SELECT name FROM public.students",
     "SELECT name FROM secret.programs",
+    # ссылки на всю строку таблицы: вытаскивают student_code
+    "SELECT g FROM v_grades AS g",
+    "SELECT row_to_json(g) FROM v_grades AS g",
+    "SELECT json_agg(g) FROM v_grades AS g",
+    "SELECT (g).student_code FROM v_grades AS g",
+    "SELECT to_jsonb(v_grades) FROM v_grades",
+    "SELECT count(*) FROM v_grades AS g WHERE g::text LIKE '%a%'",
+    "WITH t AS (SELECT student_code FROM v_grades) SELECT array_agg(t) FROM t",
+    # функции не из белого списка, в том числе исполняющие SQL из строки
+    "SELECT query_to_xml_and_xmlschema('select student_code from v_grades', true, false, '')",
+    "SELECT table_to_xml('v_grades', true, false, '')",
+    "SELECT cursor_to_xml('c', 10, true, false, '')",
+    "SELECT version()",
+    "SELECT pg_catalog.pg_sleep(10)",
 ]
 
 

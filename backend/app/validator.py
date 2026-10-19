@@ -11,11 +11,25 @@ ALLOWED_TABLES = {
     "faculties", "departments", "programs", "disciplines",
 }
 
-FORBIDDEN_FUNCTIONS = {
-    "pg_sleep", "pg_sleep_for", "pg_sleep_until", "pg_read_file",
-    "pg_read_binary_file", "pg_ls_dir", "dblink", "lo_import", "lo_export",
-    "set_config", "pg_terminate_backend", "pg_cancel_backend",
-    "pg_advisory_lock", "query_to_xml", "current_setting",
+# Белый список функций: всё остальное запрещено.
+# Имена — как их называет sqlglot (например, string_agg -> group_concat,
+# date_trunc -> timestamp_trunc, to_char -> time_to_str, AND/OR тоже функции).
+ALLOWED_FUNCTIONS = {
+    # агрегаты
+    "count", "sum", "avg", "min", "max", "stddev", "percentile_cont", "mode",
+    "group_concat", "string_agg", "array_agg", "logical_and",
+    # оконные
+    "row_number", "rank", "dense_rank", "lag", "lead",
+    # математика
+    "round", "abs", "floor", "ceil", "power", "sqrt", "ln", "mod",
+    # строки
+    "lower", "upper", "length", "trim", "substring", "replace", "concat",
+    "left", "right", "split_part", "str_position",
+    # даты
+    "extract", "date_part", "timestamp_trunc", "date_trunc", "time_to_str", "to_char",
+    "current_date", "current_timestamp", "age", "make_date",
+    # логика и типы
+    "and", "or", "case", "if", "coalesce", "nullif", "greatest", "least", "cast",
 }
 
 
@@ -60,11 +74,26 @@ def validate_sql(sql):
         if name not in ALLOWED_TABLES:
             raise ValidationError(f"таблица {name} запрещена")
 
-    # 6. Опасные функции (и вызванные как Anonymous, и как известные sqlglot)
+    # 6. Только функции из белого списка (и вызванные как Anonymous, и как известные sqlglot)
     for func in tree.find_all(exp.Func):
         fname = (func.name if isinstance(func, exp.Anonymous) else func.sql_name()).lower()
-        if fname in FORBIDDEN_FUNCTIONS:
+        if fname not in ALLOWED_FUNCTIONS:
             raise ValidationError(f"функция {fname} запрещена")
+
+    # 6.1. Ссылки на всю строку таблицы: SELECT g, row_to_json(g), (g).student_code.
+    # Так можно вытащить все столбцы, включая student_code, в обход шага 7.
+    if tree.find(exp.Dot) is not None:
+        raise ValidationError("обращение к полям через точку запрещено")
+    row_names = {table.name.lower() for table in tree.find_all(exp.Table)}
+    row_names |= {alias.name.lower() for alias in tree.find_all(exp.TableAlias) if alias.name}
+    output_aliases = {alias.alias.lower() for alias in tree.find_all(exp.Alias)}
+    for col in tree.find_all(exp.Column):
+        name = col.name.lower()
+        if col.table or name not in row_names:
+            continue
+        if name in output_aliases and col.find_ancestor(exp.Order) is not None:
+            continue  # ORDER BY по имени столбца из SELECT, например AS programs
+        raise ValidationError(f"ссылка на всю строку таблицы {name} запрещена")
 
     # 7. Персональные данные: проверяем ВСЕ SELECT, включая подзапросы и WITH
     for sel in tree.find_all(exp.Select):
