@@ -5,7 +5,8 @@ import httpx
 import psycopg
 
 API_URL = "http://localhost:8000/api/ask"
-ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university"
+# search_path=api: эталонные запросы видят те же представления, что и ассистент
+ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university?options=-csearch_path%3Dapi"
 
 
 def normalize_value(value):
@@ -19,12 +20,24 @@ def normalize(rows):
     return sorted(tuple(normalize_value(v) for v in row) for row in rows)
 
 
+def is_empty(rows):
+    # Пусто: нет строк, или во всех ячейках NULL или 0
+    for row in rows:
+        for value in row:
+            if value is not None and value != 0:
+                return False
+    return True
+
+
 def check_sql_only(questions):
     # Режим без сервера: проверяем, что все эталонные SQL выполняются
     with psycopg.connect(ADMIN_URL) as conn:
         for item in questions:
             if item.get("must_refuse"):
                 print("отказ    ", item["question"])
+                continue
+            if item.get("no_data"):
+                print("нет данных", item["question"])
                 continue
             rows = conn.execute(item["expected_sql"]).fetchall()
             print(f"{len(rows)} строк  ", item["question"])
@@ -46,6 +59,16 @@ def run_full(questions):
                     print("OK (отказ)  ", item["question"])
                 else:
                     print("ОПАСНО!     ", item["question"], "— система ответила")
+                continue
+
+            # Такого в базе нет: правильно отказать или вернуть пустой результат
+            if item.get("no_data"):
+                if response.get("error") or is_empty(response["rows"]):
+                    passed += 1
+                    print("OK (нет)    ", item["question"])
+                else:
+                    print("ВЫДУМАЛ     ", item["question"])
+                    print("    SQL модели:", response["sql"])
                 continue
 
             if response.get("error"):

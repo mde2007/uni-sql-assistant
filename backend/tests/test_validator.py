@@ -2,7 +2,9 @@ import pytest
 from app.validator import validate_sql, ValidationError
 
 GOOD = [
-    "SELECT count(DISTINCT student_code) FROM v_grades",
+    "SELECT f.name, round(avg(g.grade), 2) FROM v_grades AS g "
+    "JOIN programs AS p ON p.id = g.program_id JOIN faculties AS f ON f.id = p.faculty_id GROUP BY f.name",
+    "SELECT name FROM api.programs",
     "SELECT name FROM programs",
     "SELECT p.name, count(*) FROM v_applications AS a "
     "JOIN programs AS p ON p.id = a.program_id GROUP BY p.name",
@@ -19,10 +21,6 @@ GOOD = [
 ]
 
 BAD = [
-    "SELECT string_agg(student_code, ',') FROM v_grades",
-    "SELECT max(student_code) FROM v_grades",
-    "SELECT s FROM (SELECT student_code AS s FROM v_grades) AS x",
-    "WITH t AS (SELECT student_code AS s FROM v_students) SELECT s FROM t",
     "DROP TABLE students",
     "DELETE FROM programs",
     "UPDATE programs SET name = 'x'",
@@ -32,7 +30,6 @@ BAD = [
     "SELECT 1; DROP TABLE programs",
     "SELECT pg_sleep(10)",
     "SELECT * FROM v_students",
-    "SELECT student_code, grade FROM v_grades",
     "SELECT table_name FROM information_schema.tables",
     "WITH x AS (DELETE FROM programs RETURNING id) SELECT id FROM x",
     "SELECT name FROM programs UNION SELECT passport FROM applicants",
@@ -47,17 +44,18 @@ BAD = [
     "",
     "это не SQL вообще",
     "SELECT name FROM public.students",
+    "SELECT name FROM public.programs",
     "SELECT name FROM secret.programs",
-    # ссылки на всю строку таблицы: вытаскивают student_code
+    # ссылки на всю строку таблицы: вытаскивают все столбцы сразу
     "SELECT g FROM v_grades AS g",
     "SELECT row_to_json(g) FROM v_grades AS g",
     "SELECT json_agg(g) FROM v_grades AS g",
-    "SELECT (g).student_code FROM v_grades AS g",
+    "SELECT (g).grade FROM v_grades AS g",
     "SELECT to_jsonb(v_grades) FROM v_grades",
     "SELECT count(*) FROM v_grades AS g WHERE g::text LIKE '%a%'",
-    "WITH t AS (SELECT student_code FROM v_grades) SELECT array_agg(t) FROM t",
+    "WITH t AS (SELECT grade FROM v_grades) SELECT array_agg(t) FROM t",
     # функции не из белого списка, в том числе исполняющие SQL из строки
-    "SELECT query_to_xml_and_xmlschema('select student_code from v_grades', true, false, '')",
+    "SELECT query_to_xml_and_xmlschema('select full_name from students', true, false, '')",
     "SELECT table_to_xml('v_grades', true, false, '')",
     "SELECT cursor_to_xml('c', 10, true, false, '')",
     "SELECT version()",

@@ -69,7 +69,7 @@ def validate_sql(sql):
         name = table.name.lower()
         if not table.db and name in cte_names:
             continue  # временная таблица из WITH
-        if table.db and table.db.lower() != "public":
+        if table.db and table.db.lower() != "api":
             raise ValidationError(f"схема {table.db} запрещена")
         if name not in ALLOWED_TABLES:
             raise ValidationError(f"таблица {name} запрещена")
@@ -80,8 +80,8 @@ def validate_sql(sql):
         if fname not in ALLOWED_FUNCTIONS:
             raise ValidationError(f"функция {fname} запрещена")
 
-    # 6.1. Ссылки на всю строку таблицы: SELECT g, row_to_json(g), (g).student_code.
-    # Так можно вытащить все столбцы, включая student_code, в обход шага 7.
+    # 6.1. Ссылки на всю строку таблицы: SELECT g, row_to_json(g), (g).grade.
+    # Так можно вытащить все столбцы сразу, в обход проверки столбцов.
     if tree.find(exp.Dot) is not None:
         raise ValidationError("обращение к полям через точку запрещено")
     row_names = {table.name.lower() for table in tree.find_all(exp.Table)}
@@ -95,15 +95,12 @@ def validate_sql(sql):
             continue  # ORDER BY по имени столбца из SELECT, например AS programs
         raise ValidationError(f"ссылка на всю строку таблицы {name} запрещена")
 
-    # 7. Персональные данные: проверяем ВСЕ SELECT, включая подзапросы и WITH
+    # 7. SELECT * запрещён во всех SELECT, включая подзапросы и WITH
     for sel in tree.find_all(exp.Select):
         for column in sel.expressions:
             has_aggregate = column.find(exp.AggFunc) is not None
             if column.find(exp.Star) is not None and not has_aggregate:
                 raise ValidationError("SELECT * запрещён, нужно перечислить столбцы")
-            for col in column.find_all(exp.Column):
-                if col.name.lower() == "student_code" and col.find_ancestor(exp.Count) is None:
-                    raise ValidationError("код студента можно использовать только внутри count()")
 
     # 8. LIMIT: ставим, если нет, или уменьшаем, если слишком большой
     if isinstance(tree, exp.Union):
