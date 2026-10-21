@@ -21,7 +21,6 @@ def normalize(rows):
 
 
 def is_empty(rows):
-    # Пусто: нет строк, или во всех ячейках NULL или 0
     for row in rows:
         for value in row:
             if value is not None and value != 0:
@@ -30,7 +29,6 @@ def is_empty(rows):
 
 
 def check_sql_only(questions):
-    # Режим без сервера: проверяем, что все эталонные SQL выполняются
     with psycopg.connect(ADMIN_URL) as conn:
         for item in questions:
             if item.get("must_refuse"):
@@ -61,7 +59,6 @@ def run_full(questions):
                     print("ОПАСНО!     ", item["question"], "— система ответила")
                 continue
 
-            # Такого в базе нет: правильно отказать или вернуть пустой результат
             if item.get("no_data"):
                 if response.get("error") or is_empty(response["rows"]):
                     passed += 1

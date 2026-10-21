@@ -3,7 +3,7 @@ from sqlglot import exp
 
 try:
     from app.config import MAX_ROWS
-except Exception:  # на случай, если у Студента 1 константа названа иначе
+except Exception:
     MAX_ROWS = 1000
 
 ALLOWED_TABLES = {
@@ -11,9 +11,7 @@ ALLOWED_TABLES = {
     "faculties", "departments", "programs", "disciplines",
 }
 
-# Белый список функций: всё остальное запрещено.
-# Имена — как их называет sqlglot (например, string_agg -> group_concat,
-# date_trunc -> timestamp_trunc, to_char -> time_to_str, AND/OR тоже функции).
+# Белый список функций:
 ALLOWED_FUNCTIONS = {
     # агрегаты
     "count", "sum", "avg", "min", "max", "stddev", "percentile_cont", "mode",
@@ -43,27 +41,22 @@ def validate_sql(sql):
     if not sql:
         raise ValidationError("пустой запрос")
 
-    # 1. Разбираем SQL в дерево
     try:
         statements = sqlglot.parse(sql, read="postgres")
     except sqlglot.errors.SqlglotError:
         raise ValidationError("не удалось разобрать SQL")
 
-    # 2. Ровно один запрос
     if len(statements) != 1 or statements[0] is None:
         raise ValidationError("разрешён ровно один запрос")
     tree = statements[0]
 
-    # 3. Только SELECT (или UNION/INTERSECT/EXCEPT из SELECT)
     if not isinstance(tree, (exp.Select, exp.Union)):
         raise ValidationError("разрешены только запросы SELECT")
 
-    # 4. Внутри не должно быть изменяющих команд (например, в WITH)
     if tree.find(exp.Insert, exp.Update, exp.Delete, exp.Drop, exp.Create,
                 exp.Command, exp.Into) is not None:
         raise ValidationError("запрещённая команда внутри запроса")
 
-    # 5. Только таблицы из белого списка
     cte_names = {cte.alias_or_name.lower() for cte in tree.find_all(exp.CTE)}
     for table in tree.find_all(exp.Table):
         name = table.name.lower()
@@ -74,14 +67,11 @@ def validate_sql(sql):
         if name not in ALLOWED_TABLES:
             raise ValidationError(f"таблица {name} запрещена")
 
-    # 6. Только функции из белого списка (и вызванные как Anonymous, и как известные sqlglot)
     for func in tree.find_all(exp.Func):
         fname = (func.name if isinstance(func, exp.Anonymous) else func.sql_name()).lower()
         if fname not in ALLOWED_FUNCTIONS:
             raise ValidationError(f"функция {fname} запрещена")
 
-    # 6.1. Ссылки на всю строку таблицы: SELECT g, row_to_json(g), (g).grade.
-    # Так можно вытащить все столбцы сразу, в обход проверки столбцов.
     if tree.find(exp.Dot) is not None:
         raise ValidationError("обращение к полям через точку запрещено")
     row_names = {table.name.lower() for table in tree.find_all(exp.Table)}
@@ -95,14 +85,12 @@ def validate_sql(sql):
             continue  # ORDER BY по имени столбца из SELECT, например AS programs
         raise ValidationError(f"ссылка на всю строку таблицы {name} запрещена")
 
-    # 7. SELECT * запрещён во всех SELECT, включая подзапросы и WITH
     for sel in tree.find_all(exp.Select):
         for column in sel.expressions:
             has_aggregate = column.find(exp.AggFunc) is not None
             if column.find(exp.Star) is not None and not has_aggregate:
                 raise ValidationError("SELECT * запрещён, нужно перечислить столбцы")
 
-    # 8. LIMIT: ставим, если нет, или уменьшаем, если слишком большой
     if isinstance(tree, exp.Union):
         return f"SELECT * FROM ({tree.sql(dialect='postgres')}) AS u LIMIT {MAX_ROWS}"
 
