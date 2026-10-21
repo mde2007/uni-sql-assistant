@@ -25,7 +25,6 @@ def normalize(rows):
 
 
 def is_empty(rows):
-    # Пусто: нет строк, или во всех ячейках NULL или 0
     for row in rows:
         for value in row:
             if value is not None and value != 0:
@@ -55,7 +54,6 @@ async def main():
                     print("    SQL модели:", sql)
                 continue
 
-            # Такого в базе нет: модель не должна подменять похожим
             if item.get("no_data"):
                 if sql is None:
                     passed += 1

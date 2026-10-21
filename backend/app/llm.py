@@ -23,7 +23,6 @@ CHAT_URL = os.getenv(
 )
 CERT_PATH = Path(__file__).resolve().parent.parent / "certs" / "russian_trusted_root_ca_pem.crt"
 
-# Бесплатный тариф: одновременно можно только один запрос к модели
 chat_lock = asyncio.Semaphore(1)
 token_lock = asyncio.Lock()
 token_cache = {"value": None, "expires_at": 0.0}

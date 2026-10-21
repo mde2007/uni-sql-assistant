@@ -17,7 +17,6 @@ def main():
     reset = "--reset" in sys.argv
     password = os.getenv("POSTGRES_PASSWORD") or getpass.getpass("Пароль пользователя postgres: ")
 
-    # 1. Роль university_admin и база university
     with psycopg.connect(host=HOST, port=PORT, user="postgres", password=password,
                         dbname="postgres", autocommit=True) as conn:
         if reset:
@@ -31,14 +30,12 @@ def main():
             conn.execute("CREATE DATABASE university OWNER university_admin ENCODING 'UTF8' TEMPLATE template0")
             print("База university создана")
 
-    # 2. Таблицы, представления и права
     with psycopg.connect(host=HOST, port=PORT, user="university_admin", password="admin_password",
                         dbname="university", autocommit=True) as conn:
         tables_count = conn.execute(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'"
         ).fetchone()[0]
 
-        # 02 и 03 можно запускать повторно: они обновят представления и права
         for path in sorted((BASE / "init").glob("*.sql")):
             if path.name.startswith("01") and tables_count > 0:
                 print("Пропускаю", path.name, "(таблицы уже есть)")
@@ -48,7 +45,6 @@ def main():
 
         grades_count = conn.execute("SELECT count(*) FROM grades").fetchone()[0]
 
-    # 3. Данные, только если таблицы пустые
     if grades_count == 0:
         import seed
         seed.main()
