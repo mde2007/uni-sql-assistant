@@ -94,20 +94,16 @@
     </div>
   </main>
   
-  <!-- Подключаем виджет -->
   <script src="widget.js" data-api="http://localhost:8000"></script>
   
-  <!-- Скрипт для перемещения кнопки под карточку новостей -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const checkInterval = setInterval(() => {
         const openBtn = document.querySelector('.uc-open');
         const newsCard = document.querySelector('.news-card');
         
-        // Если кнопка и карточка найдены, перемещаем кнопку
         if (openBtn && newsCard) {
           clearInterval(checkInterval);
-          // Вставляем кнопку сразу после карточки новостей
           newsCard.parentNode.insertBefore(openBtn, newsCard.nextSibling);
         }
       }, 100);

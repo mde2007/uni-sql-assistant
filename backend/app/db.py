@@ -20,7 +20,6 @@ async def close_pool():
 
 
 async def fetch_all(sql):
-    # Валидатор уже поставил LIMIT не больше MAX_ROWS, поэтому забираем всё сразу
     async with pool.acquire() as conn:
         async with conn.transaction(readonly=True):
             stmt = await conn.prepare(sql)

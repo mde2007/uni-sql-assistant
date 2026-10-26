@@ -13,9 +13,9 @@ from app.schema_info import SCHEMA_TEXT
 from app.logger import log_event
 
 # Результаты для пагинации: query_id -> {columns, rows}.
-# Запрос выполняется один раз, страницы режутся из сохранённых строк:
-# порядок строк не меняется между страницами, база не нагружается повторно.
-# Храним только последние SAVED_RESULTS, старые вытесняются.
+# Запрос выполняется один раз:
+# порядок строк не меняется между страницами, то есть база не нагружается повторно.
+# Храним только последние SAVED_RESULTS, то есть старые вытесняются.
 saved_results = OrderedDict()
 
 
@@ -26,7 +26,7 @@ def error_response(message, sql=None):
 async def handle_question(question, session_id):
     log_event("question", session_id=session_id, question=question)
 
-    # 1. Модель пишет SQL
+    #Модель пишет SQL
     try:
         raw_sql = await generate_sql(question, SCHEMA_TEXT)
     except Exception as e:
@@ -36,14 +36,14 @@ async def handle_question(question, session_id):
     if raw_sql is None:
         return error_response("Вопрос не относится к базе данных университета.")
 
-    # 2. Проверка безопасности
+    #Проверка безопасности
     try:
         safe_sql = validate_sql(raw_sql)
     except ValidationError as e:
         log_event("sql_rejected", session_id=session_id, sql=raw_sql, reason=str(e))
         return error_response(f"Запрос отклонён проверкой безопасности: {e}", raw_sql)
 
-    # 3. Выполнение в базе
+    #Выполнение в базе
     start = time.perf_counter()
     try:
         columns, all_rows = await db.fetch_all(safe_sql)
@@ -67,7 +67,7 @@ async def handle_question(question, session_id):
     if len(saved_results) > SAVED_RESULTS:
         saved_results.popitem(last=False)
 
-    # 4. Текстовый ответ: в модель уходят только первые 50 строк
+    #Текстовый ответ: в модель уходят первые 50 строк
     try:
         answer = await generate_answer(question, columns, rows[:50], total, safe_sql)
     except Exception:

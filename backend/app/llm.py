@@ -10,7 +10,7 @@ from pathlib import Path
 import certifi
 import httpx
 
-from app import config  # noqa: F401  (подгружает .env)
+from app import config  # подгружает .env
 
 AUTH_KEY = os.getenv("GIGACHAT_AUTH_KEY", "")
 SCOPE = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
@@ -133,10 +133,10 @@ async def ask_llm(system, user, max_tokens=500):
                 response = await client.post(CHAT_URL, headers=headers, json=body)
 
                 if response.status_code == 401:
-                    token_cache["value"] = None  # токен протух, возьмём новый
+                    token_cache["value"] = None
                     continue
                 if response.status_code == 429:
-                    await asyncio.sleep(2)  # слишком часто, подождём
+                    await asyncio.sleep(2) 
                     continue
 
                 response.raise_for_status()
@@ -178,7 +178,6 @@ async def generate_answer(question: str, columns: list, rows: list, total: int, 
     if not AUTH_KEY:
         return f"Найдено строк: {total}."
 
-    # В модель уходят только первые 50 строк, большие данные не передаём
     lines = [", ".join(columns)]
     for row in rows[:50]:
         lines.append(", ".join(str(value) for value in row))

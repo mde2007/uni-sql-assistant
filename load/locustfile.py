@@ -11,7 +11,7 @@ QUESTIONS = [
 
 
 class UniversityUser(HttpUser):
-    wait_time = between(1, 3)  # пауза между вопросами, как у живого человека
+    wait_time = between(1, 3)
 
     @task(3)
     def ask_question(self):

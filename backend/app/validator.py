@@ -11,7 +11,7 @@ ALLOWED_TABLES = {
     "faculties", "departments", "programs", "disciplines",
 }
 
-# Белый список функций:
+# Список функций:
 ALLOWED_FUNCTIONS = {
     # агрегаты
     "count", "sum", "avg", "min", "max", "stddev", "percentile_cont", "mode",
