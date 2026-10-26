@@ -8,9 +8,8 @@ $$;
 
 GRANT CONNECT ON DATABASE university TO university_assistant;
 
--- В public (там таблицы с личными данными) ассистент даже не может заглянуть.
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
--- права из старой версии скрипта (справочники лежали в public)
+
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM university_assistant;
 
 REVOKE ALL ON SCHEMA public FROM university_assistant;

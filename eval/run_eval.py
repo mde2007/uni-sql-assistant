@@ -5,7 +5,6 @@ import httpx
 import psycopg
 
 API_URL = "http://localhost:8000/api/ask"
-# search_path=api: эталонные запросы видят те же представления, что и ассистент
 ADMIN_URL = "postgresql://university_admin:admin_password@localhost:5432/university?options=-csearch_path%3Dapi"
 
 

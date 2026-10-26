@@ -8,7 +8,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 logger = logging.getLogger("assistant")
 logger.setLevel(logging.INFO)
-if not logger.handlers:  # защита от дублей при повторном импорте/reload
+if not logger.handlers:  # защита от дублей при повторном импорте
     logger.addHandler(logging.FileHandler(os.path.join(LOG_DIR, "app.log"), encoding="utf-8"))
     logger.addHandler(logging.StreamHandler())
 

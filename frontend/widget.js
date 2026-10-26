@@ -2,13 +2,11 @@
   const script = document.currentScript;
   const API_URL = script.dataset.api || "http://localhost:8000";
 
-  // Стили лежат рядом с widget.js
   const css = document.createElement("link");
   css.rel = "stylesheet";
   css.href = script.src.replace("widget.js", "widget.css");
   document.head.appendChild(css);
 
-  // Номер сессии, чтобы в логах было видно, какие вопросы от одного человека
   let sessionId = sessionStorage.getItem("uc_session");
   if (!sessionId) {
     sessionId = Math.random().toString(36).slice(2);
